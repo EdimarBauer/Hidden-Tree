@@ -2,6 +2,7 @@
 * Título: Algoritmo Oculto, testes de desempenho
 * Autor: Edimar Jacob Bauer
 * Desenvolvido em: 20/11/2017
+* Email: edimarjb@gmail.com
 *
 *   Este código tem por finalidade garantir a autoria da ideia a respeito da implementação da árvore Oculta, assim temporariamente chamada,
 * antes mesmo da publicação do artigo a respeito das novas funcionalidades da Árvore Oculta como a propagação do valor na inserção. Este
@@ -28,7 +29,7 @@
 #include <bits/stdc++.h>
 
 #define INICIO 0
-#define FIM (1 << 13)
+#define FIM (1 << 25)
 
 using namespace std;
 
@@ -66,19 +67,19 @@ ArvoreOculta* buscaOculta(ArvoreOculta* no, int x){
     int a = INICIO;
     int z = FIM;
     int meio;
-    while(1){
-        if (no == NULL) return NULL;
+    while(no != NULL){
         if (no->chave == x) return no;
 
         meio = (a+z)/2;
         if (x <= meio){
             no = no->esquerda;
-            z = meio - 1;
+            z = meio;
         }else{
             no = no->direita;
             a = meio + 1;
         }
     }
+    return NULL;
 }
 
 int existeChaveAbaixo(ArvoreOculta* no, int x, int a, int z){
@@ -93,7 +94,7 @@ int existeChaveAbaixo(ArvoreOculta* no, int x, int a, int z){
 
         if (x <= meio){
             no = no->esquerda;
-            z = meio-1;
+            z = meio;
         }else{
             no = no->direita;
             a = meio+1;
@@ -105,46 +106,41 @@ int existeChaveAbaixo(ArvoreOculta* no, int x, int a, int z){
 
 ArvoreOculta* inserir(ArvoreOculta *no, int x){
 
-    ArvoreOculta *aux = no;
+    if (no == NULL)
+        return alocar(x);
 
-    if (no == NULL){
-        no = alocar(x);
-        aux = no;
-    }else{
-        int a = INICIO;
-        int z = FIM;
-        int meio;
+    ArvoreOculta *head = no;
+    int a = INICIO;
+    int z = FIM;
+    int meio;
 
-        while (1){
-            if (x == no->chave) break;
-            if (no->chave == -1) {
-                //no->chave = x;
-                no->chave = existeChaveAbaixo(no, x, a, z);
+    while (no->chave != x){
+        if (no->chave == -1) {
+            no->chave = existeChaveAbaixo(no, x, a, z);
+            break;
+        }
+
+        meio = (a + z) / 2;
+        if (x <= meio){
+            if (no->esquerda == NULL){
+                no->esquerda = alocar(x);
                 break;
             }
 
-            meio = (a + z) / 2;
-            if (x <= meio){
-                if (no->esquerda == NULL){
-                    no->esquerda = alocar(x);
-                    break;
-                }
-
-                no = no->esquerda;
-                z = meio - 1;
-            }else{
-                if (no->direita == NULL){
-                    no->direita = alocar(x);
-                    break;
-                }
-
-                no = no->direita;
-                a = meio + 1;
+            no = no->esquerda;
+            z = meio;
+        }else{
+            if (no->direita == NULL){
+                no->direita = alocar(x);
+                break;
             }
+
+            no = no->direita;
+            a = meio + 1;
         }
     }
 
-    return aux;
+    return head;
 }
 
 priority_queue<int, vector<int>, greater<int> > fila;
@@ -187,6 +183,8 @@ int maiorEsquerda(ArvoreOculta** no){
 
 ArvoreOculta* desaloca(ArvoreOculta *no){
 
+    if (no == NULL) return NULL;
+
     ArvoreOculta *aux;
     if (no->esquerda == NULL){
         aux = no->direita;
@@ -207,9 +205,7 @@ ArvoreOculta* excluirOculta(ArvoreOculta* no, int x){
     //caso base, se não tiver nenhum elemento
     if (no == NULL) return NULL;
     //caso base, se a chave estiver na cabeca
-    if (no->chave == x){
-        return desaloca(no);
-    }
+    if (no->chave == x) return desaloca(no);
 
     ArvoreOculta *aux = no;
     int a = INICIO;
@@ -219,18 +215,16 @@ ArvoreOculta* excluirOculta(ArvoreOculta* no, int x){
         meio = (a+z)/2;
         if (x <= meio){
             if (no->esquerda != NULL){
-                //achou o elemento
                 if (no->esquerda->chave == x){
                     no->esquerda = desaloca(no->esquerda);
                     break;
                 }else{
                     no = no->esquerda;
-                    z = meio-1;
+                    z = meio;
                 }
             }else break;
         }else{
             if (no->direita != NULL){
-                //achou o elemento
                 if (no->direita->chave == x){
                     no->direita = desaloca(no->direita);
                     break;
@@ -247,6 +241,10 @@ ArvoreOculta* excluirOculta(ArvoreOculta* no, int x){
 
 void exclusaoPreguicosa(ArvoreOculta* no, int x){
 
+    no = buscaOculta(no, x);
+    if (no != NULL)
+        no->chave = -1;
+    /*
     int a = INICIO;
     int z = FIM;
     int meio;
@@ -260,12 +258,13 @@ void exclusaoPreguicosa(ArvoreOculta* no, int x){
         }
         if (x <= meio){
             no = no->esquerda;
-            z = meio-1;
+            z = meio;
         }else{
             no = no->direita;
             a = meio+1;
         }
     }
+    */
 }
 
 ArvoreOculta* exclusaoParcialmentePreguicosa(ArvoreOculta* no, int x, int a, int z){
@@ -284,7 +283,7 @@ ArvoreOculta* exclusaoParcialmentePreguicosa(ArvoreOculta* no, int x, int a, int
 
     int meio = (a+z)/2;
     if (x <= meio){
-        no->esquerda = exclusaoParcialmentePreguicosa(no->esquerda, x, a, meio-1);
+        no->esquerda = exclusaoParcialmentePreguicosa(no->esquerda, x, a, meio);
     }else{
         no->direita = exclusaoParcialmentePreguicosa(no->direita, x, meio+1, z);
     }
@@ -299,60 +298,108 @@ ArvoreOculta* exclusaoParcialmentePreguicosa(ArvoreOculta* no, int x, int a, int
 
 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+int hasKeyUnderTree(ArvoreOculta* no, int x){
+
+    while(no != NULL){
+        if (no->chave == x) return -1;
+
+        if (x < no->chave) no = no->esquerda;
+        else no = no->direita;
+    }
+    return x;
+}
+
 ArvoreOculta* inserirPropagando(ArvoreOculta *no, int x){
 
+    if (no == NULL) return alocar(x);
+
     ArvoreOculta *aux = no;
+    int a = INICIO;
+    int z = FIM;
+    int meio;
 
-    if (no == NULL){
-        no = alocar(x);
-        aux = no;
-    }else{
-        int a = INICIO;
-        int z = FIM;
-        int meio, y;
+    while (no->chave != x){
+        if (no->chave == -1){
+            no->chave = hasKeyUnderTree(no, x);
+            break;
+        }
 
-        while (1){
-            if (x == no->chave) break;
-            if (no->chave == -1){
-                no->chave = x;
+        meio = (a + z) / 2;
+        if (x <= meio){
+            if (no->chave < x){
+                swap(x, no->chave);
+            }
+            if (no->esquerda == NULL){
+                no->esquerda = alocar(x);
                 break;
             }
 
-            meio = (a + z) / 2;
-            if (x <= meio){
-                if (no->chave < x){
-                    swap(x, no->chave);
-                }
-                if (no->esquerda == NULL){
-                    no->esquerda = alocar(x);
-                    break;
-                }
-
-                no = no->esquerda;
-                z = meio - 1;
-            }else{
-                if (no->chave > x){
-                    swap(x, no->chave);
-                }
-                if (no->direita == NULL){
-                    no->direita = alocar(x);
-                    break;
-                }
-
-                no = no->direita;
-                a = meio + 1;
+            no = no->esquerda;
+            z = meio;
+        }else{
+            if (no->chave > x){
+                swap(x, no->chave);
             }
+            if (no->direita == NULL){
+                no->direita = alocar(x);
+                break;
+            }
+
+            no = no->direita;
+            a = meio + 1;
         }
     }
+    return aux;
+}
 
+ArvoreOculta* inserirPropagacaoExtensiva(ArvoreOculta *no, int x){
+
+    if (no == NULL) return alocar(x);
+
+    ArvoreOculta *aux = no;
+    int a = INICIO;
+    int z = FIM;
+    int meio, y;
+
+    while (no->chave != x){
+        if (no->chave == -1){
+            no->chave = hasKeyUnderTree(no, x);
+            break;
+        }
+
+        meio = (a + z) / 2;
+        //propagação extensiva vai balancear melhor a árvore
+        if (x == meio) swap(x, no->chave);
+
+        if (x < meio){
+            if (no->chave < x) swap(x, no->chave);
+
+            if (no->esquerda == NULL){
+                no->esquerda = alocar(x);
+                break;
+            }
+
+            no = no->esquerda;
+            z = meio;
+        }else{
+            if (no->chave > x) swap(x, no->chave);
+
+            if (no->direita == NULL){
+                no->direita = alocar(x);
+                break;
+            }
+
+            no = no->direita;
+            a = meio + 1;
+        }
+    }
     return aux;
 }
 
 ArvoreOculta* buscaProp(ArvoreOculta *no, int x){
 
     //como a propagação deixa a árvore em ordem, podemos buscar o elemento verificando apenas a chave
-    while(1){
-        if (no == NULL) return NULL;
+    while(no != NULL){
         if (no->chave == x) return no;
 
         if (no->chave < x)
@@ -360,6 +407,7 @@ ArvoreOculta* buscaProp(ArvoreOculta *no, int x){
         else
             no = no->esquerda;
     }
+    return NULL;
 }
 
 void imprimirProp(ArvoreOculta *no){
@@ -367,7 +415,7 @@ void imprimirProp(ArvoreOculta *no){
     if (no == NULL) return;
 
     imprimirProp(no->esquerda);
-    //printf("%d ", no->chave);
+    printf("%d ", no->chave);
     imprimirProp(no->direita);
 
 }
@@ -377,15 +425,12 @@ ArvoreOculta* excluirProp(ArvoreOculta* no, int x){
     //caso base, se não tiver nenhum elemento
     if (no == NULL) return NULL;
     //caso base, se a chave estiver na cabeca
-    if (no->chave == x){
-        return desaloca(no);
-    }
+    if (no->chave == x) return desaloca(no);
 
     ArvoreOculta *aux = no;
     while(1){
         if (x < no->chave){
             if (no->esquerda != NULL){
-                //achou o elemento
                 if (no->esquerda->chave == x){
                     no->esquerda = desaloca(no->esquerda);
                     break;
@@ -395,7 +440,6 @@ ArvoreOculta* excluirProp(ArvoreOculta* no, int x){
             }else break;
         }else{
             if (no->direita != NULL){
-                //achou o elemento
                 if (no->direita->chave == x){
                     no->direita = desaloca(no->direita);
                     break;
@@ -405,10 +449,8 @@ ArvoreOculta* excluirProp(ArvoreOculta* no, int x){
             }else break;
         }
     }
-
     return aux;
 }
-
 
 
 
@@ -432,11 +474,13 @@ int main(){
     //Inserção inicial
     for (int i = 0; i < FIM; i++){
         random = rand() % FIM;
-        arvoreOculta = inserir(arvoreOculta, random);
+        //arvoreOculta = inserir(arvoreOculta, random);
         //arvoreOculta = inserirPropagando(arvoreOculta, random);
+        arvoreOculta = inserirPropagacaoExtensiva(arvoreOculta, random);
         //insereAVL(&arvoreAVL, random);
         //no.insert(random);
     }
+    //imprimirProp(arvoreOculta);
 
     /*
     //Funções de inserção
@@ -476,6 +520,7 @@ int main(){
     }
     */
 
+    /*
     //Funções de excluir
     for (int i = 0; i < FIM; i++){
         for (int j = 0; j < FIM; j++){
@@ -493,6 +538,7 @@ int main(){
             //insereAVL(&arvoreAVL, random);
         }
     }
+    */
 }
 
 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
