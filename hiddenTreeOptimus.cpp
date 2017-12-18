@@ -12,7 +12,7 @@
 using namespace std;
 #define SIZE (1 << 18)
 
-int bound;
+unsigned int bound;
 
 typedef struct node{
     unsigned int key;
@@ -148,30 +148,37 @@ int rightLess(Tree** node){
     return x;
 }
 
-Tree* deletion(Tree* node, unsigned int x){
+void deletion(Tree **node, unsigned int x){
 
-    if (node == NULL) return NULL;
-
-    if (node->key == x){
-        if (node->left == NULL){
-            Tree* right = node->right;
-            free(node);
-            return right;
-        }else if (node->right == NULL){
-            int limit = nextPow(x);
-            //if limit == bound so head will be deleted so bound should to be updated
-            if (limit == bound) bound = nextPow(node->left->key);
-
-            Tree* left = node->left;
-            free(node);
-            return left;
-        }else node->key = rightLess(&(node->right));
-    }else{
-        if (x < node->key) node->left = deletion(node->left, x);
-        else node->right = deletion(node->right, x);
+    if (*node == NULL) return;
+    if ((*node)->left == NULL and (*node)->right == NULL) {
+        bound = 0;
+        free(*node);
+        *node = NULL;
+        return;
     }
 
-    return node;
+    do{
+        if ((*node)->key == x){
+            if ((*node)->left == NULL){
+                Tree* right = (*node)->right;
+                free(*node);
+                (*node) = right;
+            }else if ((*node)->right == NULL){
+                //if limit == bound so head will be deleted so bound should to be updated
+                if (nextPow(x) == bound) bound = nextPow((*node)->left->key);
+
+                Tree* left = (*node)->left;
+                free(*node);
+                (*node) = left;
+            }else (*node)->key = rightLess(&((*node)->right));
+
+            return;
+        }else{
+            if (x < (*node)->key) node = &((*node)->left);
+            else node = &((*node)->right);
+        }
+    }while(*node != NULL);
 }
 
 void print(Tree *node){
@@ -195,7 +202,7 @@ int main(){
 
     for (int i = 0; i < SIZE; i++){
         random = rand() % SIZE;
-        tree = deletion(tree, random);
+        deletion(&tree, random);
     }
 
     print(tree);
