@@ -3,6 +3,7 @@
 * Data: 19/12/2017
 *
 * Update: February 21, 2018
+* Update: March 03, 2018
 *
 * Consider positive integer key
 */
@@ -134,20 +135,22 @@ void insert(Tree *&root, int &x, int low, int high){
         }
 
         middle = (low + high) / 2;
-        if (x <= middle){
+        if (x < middle){
             if (tree->left == NULL){
                 tree->left = newNode(x);
                 return;
             }
             tree = tree->left;
             high = middle;
-        }else{
+        }else if (x > middle){
             if (tree->right == NULL){
                 tree->right = newNode(x);
                 return;
             }
             tree = tree->right;
             low = middle;
+        }else{
+            swap(x, tree->key);
         }
     }
 }
