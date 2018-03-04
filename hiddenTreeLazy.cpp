@@ -196,8 +196,11 @@ void print(Tree* tree){
     print(tree->left);
     print(tree->right);
     if (tree->key != -1){
-        cout << fila.top() << " ";
-        fila.pop();
+        while(tree->key >= fila.top()){
+            cout << fila.top() << " ";
+            fila.pop();
+            if (fila.empty()) break;
+        }
     }
 }
 
