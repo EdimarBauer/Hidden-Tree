@@ -1,5 +1,5 @@
 /*
-* Create by: Edimar J. Bauer
+* Create by: Edimar Jacob Bauer
 * Data: 19/12/2017
 *
 * Update: February 21, 2018
@@ -11,10 +11,9 @@
 #include <queue>
 
 using namespace std;
-#define N (1 << 24)
+#define N (1 << 14)
 
 priority_queue<int, vector<int>, greater<int> > fila;
-int total;
 
 
 struct Tree{
@@ -29,10 +28,7 @@ Tree* search(Tree *tree, int &x, int low, int high);
 void insert(Tree *&root, int &x, int low, int high);
 void remove(Tree *&tree, int &x, int low, int high);
 
-void print(Tree* tree, int low, int high, int i);
 void print(Tree* tree);
-void check_is_correct(Tree *tree, int low, int high);
-void check(Tree *tree, int low, int high);
 
 int main(){
 
@@ -44,14 +40,12 @@ int main(){
         for (int i = 0; i < N; i++){
             x = rand() % N;
             insert(tree, x, low, high);
-            //check_is_correct(tree, low, high);
         }
 
         puts("Removing...");
         for (int i = 0; i < N; i++){
             x = rand() % N;
             remove(tree, x, low, high);
-            //check_is_correct(tree, low, high);
         }
     }
     //print(tree);
@@ -65,13 +59,12 @@ Tree* newNode(int x){
 
     Tree *tree = (Tree*) malloc(sizeof(Tree));
     if (tree == NULL){
-        puts("Err of newNodeation");
+        puts("Err of alocation");
         exit(0);
     }
 
     tree->key = x;
     tree->left = tree->right = NULL;
-    total++;
     return tree;
 }
 
@@ -169,24 +162,12 @@ void remove(Tree *&tree, int &x, int low, int high){
     if (tree->left == NULL and tree->right == NULL){
         free(tree);
         tree = NULL;
-        total--;
     }
 }
 
 
 
 
-
-
-void print(Tree* tree, int low, int high, int i){
-
-    if (tree == NULL) return;
-
-    int middle = (low + high) / 2;
-    print(tree->left, low, middle, i+1);
-    printf("%d low: %d  high: %d  alt: %d\n", tree->key, low, high, i);
-    print(tree->right, middle, high, i+1);
-}
 
 void print(Tree* tree){
 
@@ -196,38 +177,9 @@ void print(Tree* tree){
     print(tree->left);
     print(tree->right);
     if (tree->key != -1){
-        while(tree->key >= fila.top()){
+        while(!fila.empty() && tree->key >= fila.top()){
             cout << fila.top() << " ";
             fila.pop();
-            if (fila.empty()) break;
         }
     }
 }
-
-void check_is_correct(Tree *tree, int low, int high){
-
-    int to = total;
-    check(tree, low, high);
-    if (total != 0) {
-        printf("Diference of %d elements\n", total);
-        exit(0);
-    }
-    total = to;
-}
-
-void check(Tree *tree, int low, int high){
-
-    if (tree == NULL) return;
-
-    int middle = (low + high) / 2;
-    check(tree->left, low, middle);
-    total--;
-    if (tree->key != -1){
-        if (tree->key < low || tree->key > high){
-            printf("Node %d is between low: %d and high: %d\n", tree->key, low, high);
-            exit(0);
-        }
-    }
-    check(tree->right, middle, high);
-}
-
