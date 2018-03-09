@@ -4,14 +4,16 @@
 * Email: edimarjb@gmail.com
 * Date: February 22, 2018
 *
+* Update: March 08, 2018
 *
 * Consider the length of words proportional at quantity of elements that will be inserted
 * Consider only the tiny alphabet for the examples
 *
-* The function "novaString" is only to generate words of type string, to test the structure set<string> and compare the time
-* with this code
+* The function "newString" is only to generate words of type string
 *
-* The variable 'last' and 'total' serve to test the algorithm
+* The variable 'last', 'INIT', and 'total' serve to test the algorithm. The variable 'lg' represents the max length of the
+* strings that will be inserted. The constant 'ALFA' represents the 26 letters of alphabet plus 6 numbers that represents
+* final of string, that is used in function 'newString'.
 */
 
 #include <bits/stdc++.h>
@@ -19,26 +21,25 @@ using namespace std;
 #define N (1 << 20)
 #define ALFA 32
 
-char last[32];
-int total;
+char *last, *INIT, *MIDDLE, *LOW, *HIGH;
+int total, lg;
 
 struct Tree{
-    struct Tree *left, *right;
     char *key;
+    Tree *left, *right;
 };
 
-string novaString();
-char* newString(char t[], bool flag);
-Tree* newNode(char s[]);
-void mid(char s[], char low[], char high[]);
-Tree* search(Tree* tree, char s[]);
+void newString(char t[]);
+Tree* newNode(char *s);
+Tree* search(Tree *tree, char s[]);
 
-void insert(Tree *&root, char s[], char low[], char high[]);
+void mid(char *s, char *low, char *high);
+void insert(Tree *&root, char t[]);
 
 char* replace(Tree *&tree, bool left);
 void remove(Tree *&tree, char s[]);
 
-void print(Tree *tree, int height);
+void print(Tree *tree, int alt);
 void check_is_correct(Tree *tree);
 void check(Tree *tree);
 
@@ -47,30 +48,34 @@ void check(Tree *tree);
 int main(){
 
     Tree* tree = NULL;
-    char low[16] = {"aaaaaaaaaaaaaa"};
-    char high[16] = {"zzzzzzzzzzzzzz"};
-    char lo[16], hi[16], t[16];
-    char *s;
+    INIT = (char*)malloc(sizeof(char));
+    INIT[0] = '\0';
+    MIDDLE = (char*)malloc(sizeof(char)*32);
+    LOW = (char*)malloc(sizeof(char)*32);
+    HIGH = (char*)malloc(sizeof(char)*32);
+    lg = log2(N)/4; if (lg == 0)lg = 1;
+    char t[16];
     int x;
     set<string> se;
 
     for (int j = 0; j < 2; j++){
         printf("Inserting...\n");
         for (int i = 0; i < N; i++){
-            s = newString(t, 1);
-            //se.insert(novaString());
-            //cout << "Inserting: " << s << endl;
-            strcpy(lo, low); strcpy(hi, high);
-            insert(tree, s, lo, hi);
+            newString(t);
+            //se.insert(t);
+            //strcpy(lo, low); strcpy(hi, high);
+            insert(tree, t);
+            //print(tree, 0);
             //check_is_correct(tree);
         }
-
+        //print(tree, 0);
         printf("Removing...\n");
         for (int i = 0; i < N; i++){
-            newString(t, 0);
-            //se.erase(novaString());
-            //cout << "Removing: " << t << endl;
+            newString(t);
+            //se.erase(t);
+            //printf("Removing: %s\n", t);
             remove(tree, t);
+            //print(tree, 0);
             //check_is_correct(tree);
         }
     }
@@ -84,45 +89,14 @@ int main(){
 //#####################################################################################################
 
 
-string novaString(){
+void newString(char t[]){
 
-    string s = "";
-    int x;
-    int lg = log2(N)/4;
-    if (lg == 0)lg = 1;
-    int i = 0;
-    do{
-        x = rand() % ALFA;
-        if (x < 26){
-            s += (char)(x + 'a');
-            i++;
-        }
-    }while( (x < 26 || i == 0) && i < lg);
-
-    return s;
-}
-
-char* newString(char t[], bool flag){
-
-    char s[64], *r;
     int x, i = 0;
-    int lg = log2(N)/4;
-    if (lg == 0)lg = 1;
     do{
         x = rand() % ALFA;
-        if (x < 26) s[i++] = (char)(x + 'a');
+        if (x < 26) t[i++] = (char)(x + 'a');
     }while( (x < 26 || i == 0) && i < lg);
-    s[i] = '\0';
-    if (flag){
-        r = (char*)malloc(sizeof(char)*i);
-        if (r == NULL){
-            puts("Err of allocation in r");
-            exit(0);
-        }
-        strcpy(r, s);
-    }else strcpy(t, s);
-
-    return r;
+    t[i] = '\0';
 }
 
 Tree* newNode(char *s){
@@ -136,27 +110,6 @@ Tree* newNode(char *s){
     tree->left = tree->right = NULL;
     total++;
     return tree;
-}
-
-void mid(char s[], char low[], char high[]){
-
-    int i, t = strlen(low), sum, carry = 0, dif;
-    unsigned char c;
-    for (i = 0; i < t; i++){
-        sum = low[i] + high[i] + carry;
-        c = (char)(sum / 2);
-        if (sum%2){
-            dif = 0;
-            for (int j = i+1; j < t && dif == 0; j++)
-                dif = ('z' - low[j]) - (high[j] - 'a');
-            if (dif < 0){
-                c++;
-                carry = -26;
-            }else carry = 26;
-        }else carry = 0;
-        s[i] = c;
-    }
-    s[i] = '\0';
 }
 
 Tree* search(Tree* tree, char s[]){
@@ -174,38 +127,89 @@ Tree* search(Tree* tree, char s[]){
 
 
 
-void insert(Tree *&root, char *s, char low[], char high[]){
+void mid(char *s, char *low, char *high){
 
+    bool change = 0;
+    int i, mi, ma, sum, dif, carry = 0;
+    mi = strlen(low); ma = strlen(high);
+    if (mi > ma){
+        swap(mi, ma);
+        swap(low, high);
+        change = 1;
+    }
+    unsigned char c;
+    for (i = 0; i < mi; i++){
+        sum = low[i] + high[i] + carry;
+        c = (char)(sum / 2);
+        if (sum%2){
+            dif = 0;
+            for (int j = i+1; j < mi && dif == 0; j++)
+                dif = 219 - low[j] - high[j];
+            if (dif < 0){
+                c++;
+                carry = -26;
+            }else carry = 26;
+        }else carry = 0;
+        s[i] = c;
+    }
+    if (ma > mi){
+        if (change){
+            if (carry){
+                s[i-1]++;
+                carry = -carry;
+            }
+            low[i] = 'z';
+        }else low[i] = 'a';
+        low[i+1] = '\0';
+        s[i] = (high[i] + low[i] + carry) / 2;
+        i++;
+    }else if (carry) s[i++] = 'm';
+
+    s[i] = '\0';
+    if (change) swap(low, high);
+}
+
+void insert(Tree *&root, char t[]){
+
+    char *s = (char*)malloc(sizeof(char)*strlen(t));
+    strcpy(s, t);
     if (root == NULL){
         root = newNode(s);
         return;
     }
 
     Tree *tree = root;
-    char middle[16];
+    char *middle = MIDDLE;
+    middle[0] = 'm'; middle[1] = 'z'; middle[2] = '\0';
+    char *low = LOW;
+    low[0] = 'a'; low[1] = '\0';
+    char *high = HIGH;
+    high[0] = 'z'; high[1] = '\0';
     int comp;
     while(strcmp(tree->key, s) != 0){
-        mid(middle, low, high);
         //printf("Low: %s  Mid: %s   High: %s\n", low, middle, high);
         comp = strcmp(s, middle);
         if (comp < 0){
             if (strcmp(s, tree->key) > 0) swap(tree->key, s);
             if (tree->left == NULL){
                 tree->left = newNode(s);
-                break;
+                return;
             }
             tree = tree->left;
-            strcpy(high, middle);
+            swap(high, middle);
+            mid(middle, low, high);
         }else if (comp > 0){
             if (strcmp(s, tree->key) < 0) swap(tree->key, s);
             if (tree->right == NULL){
                 tree->right = newNode(s);
-                break;
+                return;
             }
             tree = tree->right;
-            strcpy(low, middle);
+            swap(low, middle);
+            mid(middle, low, high);
         }else swap(tree->key, s);
     }
+    free(s);
 }
 
 
@@ -258,18 +262,18 @@ void remove(Tree *&tree, char t[]){
 
 
 
-void print(Tree *tree, int height){
+void print(Tree *tree, int alt){
 
     if (tree == NULL) return;
 
-    print(tree->left, height+1);
-    printf("%s  height: %d\n", tree->key, height);
-    print(tree->right, height+1);
+    print(tree->left, alt+1);
+    printf("%s  height: %d\n", tree->key, alt);
+    print(tree->right, alt+1);
 }
 
 void check_is_correct(Tree *tree){
 
-    strcpy(last, "");
+    last = INIT;
     int to = total;
     check(tree);
     if (total != 0) printf("Diference of %d elements\n", total);
@@ -285,7 +289,7 @@ void check(Tree *tree){
         printf("Err between nodes %s and %s\n", last, tree->key);
         exit(0);
     }
-    strcpy(last, tree->key);
+    last = tree->key;
     total--;
     check(tree->right);
 }
