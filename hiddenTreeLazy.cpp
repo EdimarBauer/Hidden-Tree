@@ -4,8 +4,9 @@
 *
 * Update: February 21, 2018
 * Update: March 03, 2018
+* Update: March 10, 2018
 *
-* Consider positive integer key
+* Consider unique key
 */
 #include <iostream>
 #include <queue>
@@ -85,7 +86,7 @@ int findKey(Tree* tree, int &x, int low, int high){
         if (tree == NULL) return x; //means the element was not found, so it will be inserted
     }while(tree->key != x);
 
-    return -1;  //means the element already exists in the tree, nothing to do
+    return INT_MIN;  //means the element already exists in the tree, nothing to do
 }
 
 
@@ -121,8 +122,8 @@ void insert(Tree *&root, int &x, int low, int high){
     int middle;
 
     while(tree->key != x){
-        if (tree->key == -1){
-            //look for the occurrence of x lower the tree
+        if (tree->key == INT_MIN){
+            //look for the occurrence of x under the tree
             tree->key = findKey(tree, x, low, high);
             return;
         }
@@ -152,7 +153,7 @@ void remove(Tree *&tree, int &x, int low, int high){
 
     if (tree == NULL) return;
 
-    if (x == tree->key) tree->key = -1;
+    if (x == tree->key) tree->key = INT_MIN;
     else{
         int middle = (low + high) / 2;
         if (x <= middle) remove(tree->left, x, low, middle);
@@ -173,10 +174,10 @@ void print(Tree* tree){
 
     if (tree == NULL) return;
 
-    if (tree->key != -1) fila.push(tree->key);
+    if (tree->key != INT_MIN) fila.push(tree->key);
     print(tree->left);
     print(tree->right);
-    if (tree->key != -1){
+    if (tree->key != INT_MIN){
         while(!fila.empty() && tree->key >= fila.top()){
             cout << fila.top() << " ";
             fila.pop();
