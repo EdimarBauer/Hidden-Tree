@@ -2,14 +2,17 @@
 * Author: Edimar Jacob Bauer
 * Email: edimarjb@gmail.com
 * Date: March 07, 2018
+*
+* Update: March 10, 2018
 */
 
 #include <bits/stdc++.h>
 
 using namespace std;
-#define N (1 << 24)
+#define N (1 << 23)
 
-int MIDDLE, JUMP;
+int MIDDLE;
+long long JUMP;
 int last, total;
 
 struct Tree{
@@ -164,7 +167,7 @@ Tree* makeHead(Tree* tree, int x){
         root->left = tree;
         MIDDLE += JUMP;
         JUMP *= 2;
-        if (x >= MIDDLE + JUMP) headUpper = root;
+        if (x >= MIDDLE + JUMP ) headUpper = root;
     }
 
     return root;
@@ -177,7 +180,7 @@ void insert(Tree *&root, int x){
         MIDDLE = x;
         JUMP = 1;
         headLower = headUpper = root;
-    }else if (x >= MIDDLE + JUMP || x <= MIDDLE - JUMP) root = makeHead(root, x);
+    }else if (x >= MIDDLE + JUMP || x <= MIDDLE - JUMP ) root = makeHead(root, x);
     else{
         Tree *tree = root;
         int middle = MIDDLE;
@@ -189,7 +192,7 @@ void insert(Tree *&root, int x){
                     swap(tree->key, x);
                     propagationKey(tree, 0);
                 }
-                if (x <= middle - jump*2){
+                if (x <= middle - (long long)jump*2 ){
                     insert(root, x);
                     break;
                 }
@@ -198,6 +201,11 @@ void insert(Tree *&root, int x){
                     break;
                 }
                 tree = tree->left;
+                //threat int over flow
+                if ((long long)middle - jump < INT_MIN) {
+                    int dif = middle - INT_MIN;
+                    while(jump >= dif) jump /= 2;
+                }
                 middle -= jump;
                 jump /= 2;
             }else if (x > middle){
@@ -206,7 +214,7 @@ void insert(Tree *&root, int x){
                     swap(tree->key, x);
                     propagationKey(tree, 1);
                 }
-                if (x >= middle + jump*2){
+                if (x >= middle + (long long)jump*2 ){
                     insert(root, x);
                     break;
                 }
@@ -215,6 +223,10 @@ void insert(Tree *&root, int x){
                     break;
                 }
                 tree = tree->right;
+                if ((long long)middle + jump > INT_MAX) {
+                    int dif = INT_MAX - middle;
+                    while(jump >= dif) jump /= 2;
+                }
                 middle += jump;
                 jump /= 2;
             }else{
