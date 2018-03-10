@@ -3,7 +3,8 @@
 * Email: edimarjb@gmail.com
 * Date: March 07, 2018
 *
-* Updated: March 09, 2018
+* Update: March 09, 2018
+* Update: March 10, 2018
 *
 * Growth dinamic in both directions with jump technic and field jump to mark the quantity of missing nodes between the vertex.
 */
@@ -13,7 +14,8 @@
 using namespace std;
 #define N (1 << 24)
 
-int MIDDLE, JUMP;
+int MIDDLE;
+long long JUMP;
 int last, total;
 
 struct Tree{
@@ -25,6 +27,7 @@ struct Tree{
 Tree* newNode(int x);
 Tree* search(Tree* tree, int x);
 
+bool createMiddle(Tree *tree, int x, int &middle, long long &jump, bool left);
 Tree* makeHead(Tree *tree, int x);
 void insert(Tree *&tree, int x);
 
@@ -106,6 +109,55 @@ Tree* search(Tree* tree, int x){
 
 
 
+bool createMiddle(Tree *tree, int x, int &middle, long long &jump, bool left){
+
+    //verify if x belongs the missing range
+    if (left){
+        int k = -1;
+        Tree *child = tree->left;
+        do{
+            //count the quantity of nodes are missing until x place
+            if (++k == child->jump) break;
+            middle -= jump;
+            jump /= 2;
+        }while(x < middle);
+
+        if (x >= middle){
+            //needs to insert node between tree and tree->left
+            tree->left = newNode(x);
+            tree = tree->left;
+            tree->left = child;
+            child->jump--;
+            if (k){
+                //update the missing range between nodes
+                tree->jump = k;
+                child->jump -= k;
+            }
+            return true;
+        }
+    }else{
+        int k = -1;
+        Tree *child = tree->right;
+        do{
+            if (++k == child->jump) break;
+            middle += jump;
+            jump /= 2;
+        }while(x > middle);
+
+        if (x <= middle){
+            tree->right = newNode(x);
+            tree = tree->right;
+            tree->right = child;
+            child->jump--;
+            if (k){
+                tree->jump = k;
+                child->jump -= k;
+            }
+            return true;
+        }
+    }
+    return false;
+}
 
 Tree* makeHead(Tree* tree, int x){
 
@@ -153,7 +205,7 @@ void insert(Tree *&root, int x){
     else{
         Tree *tree = root;
         int middle = MIDDLE;
-        int jump = JUMP / 2;
+        long long jump = JUMP / 2;
         while(tree->key != x){
             if (x < middle){
                 if (x > tree->key) swap(x, tree->key);
@@ -161,32 +213,13 @@ void insert(Tree *&root, int x){
                     tree->left = newNode(x);
                     break;
                 }
-                if (tree->left->jump and x > tree->left->key){
-                    //verify if x belongs the missing range
-                    int k = -1;
-                    Tree *child = tree->left;
-                    do{
-                        //count the quantity of nodes are missing until x place
-                        if (++k == child->jump) break;
-                        middle -= jump;
-                        jump /= 2;
-                    }while(x < middle);
+                if (tree->left->jump) if (createMiddle(tree, x, middle, jump, 1)) break;
 
-                    if (x >= middle){
-                        //needs to insert node between tree and tree->left
-                        tree->left = newNode(x);
-                        tree = tree->left;
-                        tree->left = child;
-                        child->jump--;
-                        if (k){
-                            //update the missing range between nodes
-                            tree->jump = k;
-                            child->jump -= k;
-                        }
-                        break;
-                    }
-                }
                 tree = tree->left;
+                if (middle - jump < INT_MIN) {
+                    int dif = middle - INT_MIN;
+                    while(jump >= dif) jump /= 2;
+                }
                 middle -= jump;
                 jump /= 2;
             }else if (x > middle){
@@ -196,28 +229,13 @@ void insert(Tree *&root, int x){
                     tree->right = newNode(x);
                     break;
                 }
-                if (tree->right->jump and x < tree->right->key){
-                    int k = -1;
-                    Tree *child = tree->right;
-                    do{
-                        if (++k == child->jump) break;
-                        middle += jump;
-                        jump /= 2;
-                    }while(x > middle);
+                if (tree->right->jump) if (createMiddle(tree, x, middle, jump, 0)) break;
 
-                    if (x <= middle){
-                        tree->right = newNode(x);
-                        tree = tree->right;
-                        tree->right = child;
-                        child->jump--;
-                        if (k){
-                            tree->jump = k;
-                            child->jump -= k;
-                        }
-                        break;
-                    }
-                }
                 tree = tree->right;
+                if (middle + jump > INT_MAX) {
+                    int dif = INT_MAX - middle;
+                    while(jump >= dif) jump /= 2;
+                }
                 middle += jump;
                 jump /= 2;
             }else swap(x, tree->key);
