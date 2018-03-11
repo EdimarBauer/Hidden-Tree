@@ -98,7 +98,7 @@ bool findKey(Tree* tree, int x, int low, int high){
         }
 
         if (tree == NULL) return false; //means the element was not found, so it will be inserted
-    }while(tree->key != x);
+    }while(tree->key != x || !tree->active);
 
     return true;  //means the element already exists in the tree, nothing to do
 }
@@ -111,7 +111,7 @@ Tree* search(Tree* tree, int x, int low, int high){
 
     int middle;
     while(tree != NULL){
-        if (x == tree->key) return tree;
+        if (x == tree->key && tree->active) return tree;
 
         middle = (low + high) / 2;
         if (x <= middle){
@@ -170,14 +170,14 @@ void remove(Tree *&tree, int x, int low, int high){
 
     if (tree == NULL) return;
 
-    if (x == tree->key) tree->active = 0;
+    if (x == tree->key && tree->active) tree->active = 0;
     else{
         int middle = (low + high) / 2;
         if (x <= middle) remove(tree->left, x, low, middle);
         else remove(tree->right, x, middle, high);
     }
 
-    if (tree->left == NULL and tree->right == NULL){
+    if (!tree->active && tree->left == NULL && tree->right == NULL){
         free(tree);
         tree = NULL;
         total--;
@@ -208,9 +208,8 @@ void printar(Tree *tree, int i){
     if (tree == NULL) return;
 
     printar(tree->left, i+1);
-    if (tree->active){
-        printf("%d  alt: %d\n", tree->key, i);
-    }
+    if (tree->active) printf("%d  alt: %d\n", tree->key, i);
+    else printf("%d  alt: %d   deleted\n", tree->key, i);
     printar(tree->right, i+1);
 }
 
