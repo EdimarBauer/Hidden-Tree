@@ -83,6 +83,28 @@ Tree* newNode(int x){
     return tree;
 }
 
+Tree* search(Tree* tree, int x, int low, int high){
+
+    int middle;
+    while(tree != NULL){
+        if (x == tree->key && tree->active) return tree;
+
+        middle = (low + high) / 2;
+        if (x <= middle){
+            tree = tree->left;
+            high = middle;
+        }else{
+            tree = tree->right;
+            low = middle;
+        }
+    }
+
+    return NULL;
+}
+
+
+
+
 bool findKey(Tree* tree, int x, int low, int high){
 
     int middle;
@@ -103,29 +125,6 @@ bool findKey(Tree* tree, int x, int low, int high){
     return true;  //means the element already exists in the tree, nothing to do
 }
 
-
-
-
-
-Tree* search(Tree* tree, int x, int low, int high){
-
-    int middle;
-    while(tree != NULL){
-        if (x == tree->key && tree->active) return tree;
-
-        middle = (low + high) / 2;
-        if (x <= middle){
-            tree = tree->left;
-            high = middle;
-        }else{
-            tree = tree->right;
-            low = middle;
-        }
-    }
-
-    return NULL;
-}
-
 void insert(Tree *&root, int x, int low, int high){
 
     if (root == NULL){
@@ -135,7 +134,7 @@ void insert(Tree *&root, int x, int low, int high){
     Tree *tree = root;
     int middle;
 
-    while(tree->key != x){
+    while(tree->key != x || !tree->active){
         if (!tree->active){
             //look for the occurrence of x under the tree
             if (!findKey(tree, x, low, high)){
@@ -160,9 +159,7 @@ void insert(Tree *&root, int x, int low, int high){
             }
             tree = tree->right;
             low = middle;
-        }else{
-            swap(x, tree->key);
-        }
+        }else swap(x, tree->key);
     }
 }
 
