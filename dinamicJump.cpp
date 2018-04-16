@@ -4,16 +4,18 @@
 * Date: December 18, 2017
 *
 * Updated: February 21, 2018
+* Updated: April, 06, 2018
 *
 * Consider no lazy deletion and positive integer key
 *
 * The variable 'last' and 'total' serve to test the algorithm
+*
 */
 
 #include <bits/stdc++.h>
 
 using namespace std;
-#define N (1 << 25)
+#define N (1 << 23)
 
 int bound;
 int last, total;
@@ -23,6 +25,7 @@ struct Tree{
     struct Tree *left, *right;
 };
 
+unsigned int random();
 Tree* newNode(int x);
 int nextPow(int x);
 Tree* search(Tree* tree, int &x);
@@ -33,8 +36,7 @@ void add(Tree* tree, int &x);
 void insert(Tree *&tree, int &x);
 
 int replace(Tree *&tree, bool left);
-void delete_node(Tree *&tree, int &x);
-void remove(Tree *&tree, int &x);
+void remove(Tree *&root, int x);
 
 void print(Tree *tree, int height);
 void check_is_correct(Tree *tree);
@@ -47,16 +49,17 @@ int main(){
     Tree* tree = NULL;
     int x;
 
-    for (int j = 0; j < 2; j++){
+    for (int j = 0; j < 1; j++){
         printf("Inserting...\n");
         for (int i = 0; i < N; i++){
-            x = rand() % N;
+            //x = rand() % N;
+            x = random();
             insert(tree, x);
             //check_is_correct(tree);
         }
 
         printf("Removing...\n");
-        for (int i = 0; i < N; i++){
+        for (int i = 0; i < 0; i++){
             x = rand() % N;
             remove(tree, x);
             //check_is_correct(tree);
@@ -72,7 +75,15 @@ int main(){
 //#####################################################################################################
 
 
+unsigned int random(){
 
+    unsigned int x = 0;
+    for (int i = 0; i < 31; i++){
+        x += (rand()%2) << i;
+    }
+    //printf("%u\n", x);
+    return x;
+}
 
 
 Tree* newNode(int x){
@@ -196,7 +207,6 @@ int replace(Tree *&tree, bool left){
             if (tree->left == NULL){
                 free(tree);
                 tree = NULL;
-                total--;
             }else tree->key = replace(tree->left, 1);
         }else x = replace(tree->right, 1);
     }else{
@@ -205,7 +215,6 @@ int replace(Tree *&tree, bool left){
             if (tree->right == NULL){
                 free(tree);
                 tree = NULL;
-                total--;
             }else tree->key = replace(tree->right, 0);
         }else x = replace(tree->left, 0);
     }
@@ -213,32 +222,39 @@ int replace(Tree *&tree, bool left){
     return x;
 }
 
-void delete_node(Tree *&tree, int &x){
+void remove(Tree *&root, int x){
 
-    if (tree == NULL) return;
+    if (root == NULL) return;
+    Tree **tree = &root;
+    bool right = 0;
 
-    if (x == tree->key){
-        if (tree->left == NULL && tree->right == NULL){
-            free(tree);
-            tree = NULL;
+    while(*tree != NULL){
+        if ((*tree)->key == x){
+            if ((*tree)->left == NULL && (*tree)->right == NULL){
+                free(*tree);
+                *tree = NULL;
+            }else{
+                if ((*tree)->right != NULL) (*tree)->key = replace((*tree)->right, 0);
+                else {
+                    if (right == 0){
+                        Tree *aux = *tree;
+                        if (aux == root) bound = nextPow(aux->left->key);
+                        *tree = (*tree)->left;
+                        free(aux);
+                    }else (*tree)->key = replace((*tree)->left, 1);
+                }
+            }
             total--;
-        }else{
-            if (tree->right != NULL) tree->key = replace(tree->right, 0);
-            else tree->key = replace(tree->left, 1);
+            return;
         }
-    }else if (x < tree->key) delete_node(tree->left, x);
-    else delete_node(tree->right, x);
-}
-
-void remove(Tree *&tree, int &x){
-
-    if (tree && tree->key == x && !tree->right && tree->left){
-        bound = nextPow(tree->left->key);
-        tree->key = replace(tree->left, 1);
-    }else{
-        delete_node(tree, x);
+        if (x < (*tree)->key) tree = &((*tree)->left);
+        else {
+            right = 1;
+            tree = &((*tree)->right);
+        }
     }
 }
+
 
 
 
@@ -277,3 +293,4 @@ void check(Tree *tree){
     total--;
     check(tree->right);
 }
+
